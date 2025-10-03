@@ -20,25 +20,32 @@ interface Message {
   text: string;
   sender: 'me' | 'them';
   time: string;
+  chatId: number;
 }
+
+const initialMessages: Message[] = [
+  { id: 1, chatId: 1, text: 'Привет! Как дела?', sender: 'them', time: '14:30' },
+  { id: 2, chatId: 1, text: 'Отлично! А у тебя?', sender: 'me', time: '14:31' },
+  { id: 3, chatId: 1, text: 'Тоже хорошо, работаю над новым проектом', sender: 'them', time: '14:32' },
+  { id: 4, chatId: 2, text: 'Смотри что нашел', sender: 'them', time: '13:40' },
+  { id: 5, chatId: 2, text: 'Отправил файлы', sender: 'them', time: '13:45' },
+  { id: 6, chatId: 3, text: 'Встреча в 15:00', sender: 'them', time: '12:20' },
+  { id: 7, chatId: 3, text: 'Все участники приглашены', sender: 'them', time: '12:22' },
+  { id: 8, chatId: 4, text: 'Помоги с задачей', sender: 'them', time: 'Вчера' },
+  { id: 9, chatId: 4, text: 'Спасибо за помощь!', sender: 'them', time: 'Вчера' },
+];
 
 const Index = () => {
   const [selectedChat, setSelectedChat] = useState<number | null>(1);
   const [showProfile, setShowProfile] = useState(false);
   const [message, setMessage] = useState('');
-
-  const chats: Chat[] = [
-    { id: 1, name: 'Анна Смирнова', lastMessage: 'Привет! Как дела?', time: '14:32', avatar: '', unread: 2 },
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [chats, setChats] = useState<Chat[]>([
+    { id: 1, name: 'Анна Смирнова', lastMessage: 'Тоже хорошо, работаю над новым проектом', time: '14:32', avatar: '', unread: 2 },
     { id: 2, name: 'Дмитрий Петров', lastMessage: 'Отправил файлы', time: '13:45', avatar: '' },
-    { id: 3, name: 'Команда проекта', lastMessage: 'Встреча в 15:00', time: '12:20', avatar: '', unread: 5 },
+    { id: 3, name: 'Команда проекта', lastMessage: 'Все участники приглашены', time: '12:22', avatar: '', unread: 5 },
     { id: 4, name: 'Елена Кузнецова', lastMessage: 'Спасибо за помощь!', time: 'Вчера', avatar: '' },
-  ];
-
-  const messages: Message[] = [
-    { id: 1, text: 'Привет! Как дела?', sender: 'them', time: '14:30' },
-    { id: 2, text: 'Отлично! А у тебя?', sender: 'me', time: '14:31' },
-    { id: 3, text: 'Тоже хорошо, работаю над новым проектом', sender: 'them', time: '14:32' },
-  ];
+  ]);
 
   const currentUser = {
     name: 'Вы',
@@ -47,12 +54,36 @@ const Index = () => {
     email: 'user@example.com',
   };
 
+  const getCurrentTime = () => {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  };
+
   const handleSendMessage = () => {
-    if (message.trim()) {
-      console.log('Отправка сообщения:', message);
+    if (message.trim() && selectedChat) {
+      const newMessage: Message = {
+        id: messages.length + 1,
+        chatId: selectedChat,
+        text: message.trim(),
+        sender: 'me',
+        time: getCurrentTime(),
+      };
+
+      setMessages([...messages, newMessage]);
+
+      setChats(
+        chats.map((chat) =>
+          chat.id === selectedChat
+            ? { ...chat, lastMessage: message.trim(), time: getCurrentTime(), unread: 0 }
+            : chat
+        )
+      );
+
       setMessage('');
     }
   };
+
+  const currentChatMessages = messages.filter((msg) => msg.chatId === selectedChat);
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50">
@@ -187,7 +218,7 @@ const Index = () => {
 
             <ScrollArea className="flex-1 p-6">
               <div className="space-y-4">
-                {messages.map((msg) => (
+                {currentChatMessages.map((msg) => (
                   <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] ${msg.sender === 'me' ? 'order-2' : 'order-1'}`}>
                       <div
