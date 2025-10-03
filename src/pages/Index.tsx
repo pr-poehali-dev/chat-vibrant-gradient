@@ -4,6 +4,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import Icon from '@/components/ui/icon';
 
 interface Chat {
@@ -21,6 +24,16 @@ interface Message {
   sender: 'me' | 'them';
   time: string;
   chatId: number;
+}
+
+interface UserSettings {
+  notifications: boolean;
+  soundEnabled: boolean;
+  messagePreview: boolean;
+  onlineStatus: boolean;
+  readReceipts: boolean;
+  darkMode: boolean;
+  autoDownload: boolean;
 }
 
 const initialMessages: Message[] = [
@@ -47,12 +60,27 @@ const Index = () => {
     { id: 4, name: 'Елена Кузнецова', lastMessage: 'Спасибо за помощь!', time: 'Вчера', avatar: '' },
   ]);
 
-  const currentUser = {
-    name: 'Вы',
+  const [currentUser, setCurrentUser] = useState({
+    name: 'Иван Петров',
     status: 'В сети',
     avatar: '',
-    email: 'user@example.com',
-  };
+    email: 'ivan.petrov@example.com',
+    phone: '+7 (999) 123-45-67',
+    bio: 'Разработчик и любитель путешествий',
+  });
+
+  const [settings, setSettings] = useState<UserSettings>({
+    notifications: true,
+    soundEnabled: true,
+    messagePreview: true,
+    onlineStatus: true,
+    readReceipts: true,
+    darkMode: false,
+    autoDownload: false,
+  });
+
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editForm, setEditForm] = useState(currentUser);
 
   const getCurrentTime = () => {
     const now = new Date();
@@ -83,11 +111,25 @@ const Index = () => {
     }
   };
 
+  const handleSaveProfile = () => {
+    setCurrentUser(editForm);
+    setIsEditingProfile(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditForm(currentUser);
+    setIsEditingProfile(false);
+  };
+
+  const toggleSetting = (key: keyof UserSettings) => {
+    setSettings({ ...settings, [key]: !settings[key] });
+  };
+
   const currentChatMessages = messages.filter((msg) => msg.chatId === selectedChat);
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50">
-      <div className={`${showProfile ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r bg-white`}>
+      <div className={`${showProfile ? 'w-96' : 'w-0'} transition-all duration-300 overflow-hidden border-r bg-white`}>
         <div className="h-full flex flex-col">
           <div className="p-6 border-b">
             <div className="flex items-center justify-between mb-6">
@@ -97,34 +139,214 @@ const Index = () => {
               </Button>
             </div>
             <div className="flex flex-col items-center">
-              <Avatar className="w-24 h-24 mb-4">
-                <AvatarImage src={currentUser.avatar} />
-                <AvatarFallback className="text-2xl gradient-animated text-white">
-                  {currentUser.name.substring(0, 1)}
-                </AvatarFallback>
-              </Avatar>
-              <h3 className="font-semibold text-lg mb-1">{currentUser.name}</h3>
-              <p className="text-sm text-green-500 mb-2">{currentUser.status}</p>
-              <p className="text-sm text-muted-foreground">{currentUser.email}</p>
+              <div className="relative mb-4">
+                <Avatar className="w-24 h-24">
+                  <AvatarImage src={currentUser.avatar} />
+                  <AvatarFallback className="text-2xl gradient-animated text-white">
+                    {currentUser.name.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <Button
+                  size="icon"
+                  className="absolute bottom-0 right-0 h-8 w-8 rounded-full gradient-animated text-white"
+                >
+                  <Icon name="Camera" size={14} />
+                </Button>
+              </div>
+
+              {isEditingProfile ? (
+                <div className="w-full space-y-3">
+                  <Input
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    placeholder="Имя"
+                  />
+                  <Input
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    placeholder="Email"
+                  />
+                  <Input
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    placeholder="Телефон"
+                  />
+                  <Input
+                    value={editForm.bio}
+                    onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                    placeholder="О себе"
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={handleSaveProfile} className="flex-1 gradient-animated text-white">
+                      Сохранить
+                    </Button>
+                    <Button onClick={handleCancelEdit} variant="outline" className="flex-1">
+                      Отмена
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h3 className="font-semibold text-lg mb-1">{currentUser.name}</h3>
+                  <p className="text-sm text-green-500 mb-2">{currentUser.status}</p>
+                  <p className="text-sm text-muted-foreground mb-1">{currentUser.email}</p>
+                  <p className="text-sm text-muted-foreground mb-2">{currentUser.phone}</p>
+                  <p className="text-sm text-center text-muted-foreground mb-4">{currentUser.bio}</p>
+                  <Button
+                    onClick={() => setIsEditingProfile(true)}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Icon name="Edit" size={16} className="mr-2" />
+                    Редактировать профиль
+                  </Button>
+                </>
+              )}
             </div>
           </div>
-          <div className="p-6 space-y-4">
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-muted-foreground">Настройки</h4>
-              <Button variant="ghost" className="w-full justify-start">
-                <Icon name="Bell" size={18} className="mr-2" />
-                Уведомления
-              </Button>
-              <Button variant="ghost" className="w-full justify-start">
-                <Icon name="Lock" size={18} className="mr-2" />
-                Приватность
-              </Button>
-              <Button variant="ghost" className="w-full justify-start">
-                <Icon name="Palette" size={18} className="mr-2" />
-                Тема
-              </Button>
+
+          <ScrollArea className="flex-1">
+            <div className="p-6 space-y-6">
+              <div>
+                <h4 className="text-sm font-semibold mb-4">Уведомления</h4>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Icon name="Bell" size={18} className="text-muted-foreground" />
+                      <Label htmlFor="notifications" className="cursor-pointer">Уведомления</Label>
+                    </div>
+                    <Switch
+                      id="notifications"
+                      checked={settings.notifications}
+                      onCheckedChange={() => toggleSetting('notifications')}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Icon name="Volume2" size={18} className="text-muted-foreground" />
+                      <Label htmlFor="sound" className="cursor-pointer">Звук</Label>
+                    </div>
+                    <Switch
+                      id="sound"
+                      checked={settings.soundEnabled}
+                      onCheckedChange={() => toggleSetting('soundEnabled')}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Icon name="Eye" size={18} className="text-muted-foreground" />
+                      <Label htmlFor="preview" className="cursor-pointer">Превью сообщений</Label>
+                    </div>
+                    <Switch
+                      id="preview"
+                      checked={settings.messagePreview}
+                      onCheckedChange={() => toggleSetting('messagePreview')}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h4 className="text-sm font-semibold mb-4">Приватность</h4>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Icon name="CircleDot" size={18} className="text-muted-foreground" />
+                      <Label htmlFor="online" className="cursor-pointer">Показывать онлайн</Label>
+                    </div>
+                    <Switch
+                      id="online"
+                      checked={settings.onlineStatus}
+                      onCheckedChange={() => toggleSetting('onlineStatus')}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Icon name="CheckCheck" size={18} className="text-muted-foreground" />
+                      <Label htmlFor="receipts" className="cursor-pointer">Отчеты о прочтении</Label>
+                    </div>
+                    <Switch
+                      id="receipts"
+                      checked={settings.readReceipts}
+                      onCheckedChange={() => toggleSetting('readReceipts')}
+                    />
+                  </div>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Icon name="Shield" size={18} className="mr-2" />
+                    Заблокированные пользователи
+                  </Button>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h4 className="text-sm font-semibold mb-4">Оформление</h4>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Icon name="Moon" size={18} className="text-muted-foreground" />
+                      <Label htmlFor="dark" className="cursor-pointer">Темная тема</Label>
+                    </div>
+                    <Switch
+                      id="dark"
+                      checked={settings.darkMode}
+                      onCheckedChange={() => toggleSetting('darkMode')}
+                    />
+                  </div>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Icon name="Palette" size={18} className="mr-2" />
+                    Цветовая схема
+                  </Button>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h4 className="text-sm font-semibold mb-4">Данные и хранилище</h4>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Icon name="Download" size={18} className="text-muted-foreground" />
+                      <Label htmlFor="download" className="cursor-pointer">Автозагрузка медиа</Label>
+                    </div>
+                    <Switch
+                      id="download"
+                      checked={settings.autoDownload}
+                      onCheckedChange={() => toggleSetting('autoDownload')}
+                    />
+                  </div>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Icon name="Database" size={18} className="mr-2" />
+                    Управление хранилищем
+                  </Button>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h4 className="text-sm font-semibold mb-4">Дополнительно</h4>
+                <div className="space-y-2">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Icon name="HelpCircle" size={18} className="mr-2" />
+                    Помощь и поддержка
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Icon name="Info" size={18} className="mr-2" />
+                    О приложении
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start text-red-600 hover:text-red-700">
+                    <Icon name="LogOut" size={18} className="mr-2" />
+                    Выйти из аккаунта
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
+          </ScrollArea>
         </div>
       </div>
 
